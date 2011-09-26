@@ -164,10 +164,10 @@ connect_stop(_) ->
     meck:unload(amqp_connection),
     ok.
 
-direct_expects(ExpectedUser, ExpectedPass) ->
+direct_expects(ExpectedUser) ->
     meck:expect(amqp_connection, start,
-                 fun(direct, #amqp_params{username=U, password=P})
-                       when U =:= ExpectedUser, P =:= ExpectedPass ->
+                 fun(direct, #amqp_params_direct{username=U})
+                       when U =:= ExpectedUser ->
                          {ok, dummy_direct_conn}
                  end),
 
@@ -179,11 +179,11 @@ direct_expects(ExpectedUser, ExpectedPass) ->
 
 network_expects(Host, Port, User, Pass, VHost) ->
     meck:expect(amqp_connection, start,
-                 fun(network, #amqp_params{username=U,
-                                           password=P0,
-                                           host=H,
-                                           port=P1,
-                                           virtual_host=V})
+                 fun(network,#amqp_params_network{username=U,
+                                                  password=P0,
+                                                  host=H,
+                                                  port=P1,
+                                                  virtual_host=V})
                      when U =:= User,
                           P0 =:= Pass,
                           H =:= Host,
@@ -203,7 +203,7 @@ connect_test_() ->
     {setup, fun connect_setup/0, fun connect_stop/1,
      ?_test(
         [begin
-             direct_expects(?DEFAULT_USER, ?DEFAULT_PASS),
+             direct_expects(?DEFAULT_USER),
 
              ?assertEqual({ok, {dummy_direct_conn, dummy_direct_channel}},
                           bunny_util:connect())
@@ -214,7 +214,7 @@ connect_direct_test_() ->
     {setup, fun connect_setup/0, fun connect_stop/1,
      ?_test(
         [begin
-             direct_expects(?DEFAULT_USER, ?DEFAULT_PASS),
+             direct_expects(?DEFAULT_USER),
              ?assertEqual({ok, {dummy_direct_conn, dummy_direct_channel}},
                           bunny_util:connect(direct))
          end])}.
@@ -224,11 +224,10 @@ connect_direct_creds_test_() ->
     {setup, fun connect_setup/0, fun connect_stop/1,
      ?_test(
         [begin
-             direct_expects(<<"al">>, <<"franken">>),
+             direct_expects(<<"al">>),
              ?assertEqual({ok, {dummy_direct_conn, dummy_direct_channel}},
-                          bunny_util:connect({direct, #amqp_params{
-                                     username= <<"al">>,
-                                     password= <<"franken">>}}))
+                          bunny_util:connect({direct, #amqp_params_direct{
+                                     username= <<"al">>}}))
          end])}.
 
 
